@@ -1,1 +1,12 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/wGq_UtnU)
+# MODULE 2 ASSIGNMENT
+
+## Checkpoint 1
+
+1. **Github Repository** containing:
+
+- SQL script(s)
+- Proper .gitignore and a README.md
+- A commit history that shows incremental progress
+
+2. **Schema Diagram**
+   ![alt text](<screenshot diagram sql.png>)
