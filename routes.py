@@ -1,6 +1,6 @@
 from flask import jsonify, request, Blueprint
 from extensions import db
-from models import Category, OrderItem, Order, Product, User
+from models import Category, order_items, Order, Product, User
 from sqlalchemy.exc import IntegrityError
 
 product_bp = Blueprint('products', __name__)
@@ -136,25 +136,40 @@ def add_order_item():
 
     if not data.get('order_id') or not data.get('product_id'):
         return jsonify({'Error': 'order id and product id are required'}), 400
-    order_item = OrderItem(
-        order_id=data.get('order_id'),
-        product_id=data.get('product_id'),
-        quantity=data.get('quantity')
-    )
+    # order_item = order_items(
+    #     order_id=data.get('order_id'),
+    #     product_id=data.get('product_id')
+    # )
+    # try:
+    #     db.session.add(order_item)
+    #     db.session.commit()
+    #     return jsonify(order_item.to_dict()), 201
+    # except IntegrityError:
+    #     db.session.rollback()
+    #     return jsonify({'Error': 'Data violates database constraints'}), 409
     try:
-        db.session.add(order_item)
+        stmt = order_items.insert().values(
+            order_id=data.get('order_id'),
+            product_id=data.get('product_id')
+        )
+        db.session.execute(stmt)
         db.session.commit()
-        return jsonify(order_item.to_dict()), 201
+        return jsonify({'order_id': data['order_id'], 'product_id': data['product_id']}), 201
     except IntegrityError:
         db.session.rollback()
         return jsonify({'Error': 'Data violates database constraints'}), 409
 
 @order_item_bp.route('/order_items', methods=['GET'])
 def get_order_items():
-    order_items = OrderItem.query.all()
-    if not order_items:
+    # order_items = OrderItem.query.all()
+    # if not order_items:
+    #     return jsonify({'Error': 'No order items found'}), 404
+    # return jsonify([oi.to_dict() for oi in order_items]), 200
+
+    result = db.session.execute(order_items.select()).fetchall()
+    if not result:
         return jsonify({'Error': 'No order items found'}), 404
-    return jsonify([oi.to_dict() for oi in order_items]), 200
+    return jsonify([{'order_id': row.order_id, 'product_id': row.product_id} for row in result]), 200
 
 category_bp = Blueprint('categories', __name__)
 

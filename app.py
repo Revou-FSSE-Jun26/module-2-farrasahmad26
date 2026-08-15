@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from extensions import db
-from models import Category, OrderItem, Order, Product, User
+from models import Category, order_items, Order, Product, User
 from routes import product_bp, user_bp, order_bp, order_item_bp, category_bp
 from flask_migrate import Migrate
 
