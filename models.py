@@ -95,6 +95,7 @@ class User(db.Model):
     username = db.Column(db.String(50), nullable=False, unique=True)
     email = db.Column(db.String(255), nullable=False, unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(50), nullable=False, server_default="user")
     is_active = db.Column(db.Boolean, nullable=False, server_default=db.FetchedValue())
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
 
@@ -103,6 +104,7 @@ class User(db.Model):
             'id' : self.id,
             'username' : self.username,
             'email' : self.email,
+            'role' : self.role,
             'is_active' : self.is_active,
             'created_at' : self.created_at
         }
