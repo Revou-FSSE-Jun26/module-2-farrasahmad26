@@ -3,9 +3,12 @@ from extensions import db
 from models import Category, order_items, Order, Product, User
 from routes import product_bp, user_bp, order_bp, order_item_bp, category_bp
 from flask_migrate import Migrate
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:root@localhost:5432/revoshop_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 app.register_blueprint(product_bp)

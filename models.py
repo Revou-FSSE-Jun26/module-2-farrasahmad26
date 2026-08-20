@@ -1,6 +1,7 @@
 # coding: utf-8
 from datetime import datetime
 from extensions import db
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class Category(db.Model):
     __tablename__ = 'categories'
@@ -10,6 +11,7 @@ class Category(db.Model):
     description = db.Column(db.Text)
     is_active = db.Column(db.Boolean, nullable=False, server_default=db.FetchedValue())
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
+    deleted_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
         return {
@@ -79,6 +81,7 @@ class Product(db.Model):
     price = db.Column(db.Numeric(10, 2), nullable=False)
     stock_quantity = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
+    deleted_at = db.Column(db.DateTime, nullable=True)
 
     category = db.relationship('Category', primaryjoin='Product.category_id == Category.id', backref='products')
 
@@ -103,6 +106,7 @@ class User(db.Model):
     role = db.Column(db.String(50), nullable=False, server_default="user")
     is_active = db.Column(db.Boolean, nullable=False, server_default=db.FetchedValue())
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
+    deleted_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
         return {
@@ -113,3 +117,10 @@ class User(db.Model):
             'is_active' : self.is_active,
             'created_at' : self.created_at
         }
+    
+    def hashing_password(self, raw_pass):
+        self.password_hash = generate_password_hash(raw_pass)
+    
+    def check_password(self, raw_pass):
+        return check_password_hash(self.password_hash, raw_pass)
+
