@@ -1,13 +1,13 @@
 from flask import jsonify, request, Blueprint
-from extensions import db
-from models import Category
+from configuration.extensions import db
+from model.models import Category
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
-from categories_validation import validate_category_data
+from validation.categories_validation import validate_category_data
 
 category_bp = Blueprint('categories', __name__)
 
-@category_bp.route('/', methods=['GET'])
+@category_bp.route('', methods=['GET'])
 def get_categories():
     categories = Category.query.filter_by(deleted_at=None).all()
     if not categories:
@@ -21,7 +21,7 @@ def get_category(category_id):
         return jsonify({'error': f'Category {category_id} not found'}), 404
     return jsonify(category.to_dict()), 200
 
-@category_bp.route('/', methods=['POST'])
+@category_bp.route('', methods=['POST'])
 def create_category():
     data = request.get_json()
     if not data:

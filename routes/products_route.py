@@ -1,20 +1,20 @@
 from flask import jsonify, request, Blueprint
-from extensions import db
-from models import Product
+from configuration.extensions import db
+from model.models import Product
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
-from products_validation import validate_product_data
+from validation.products_validation import validate_product_data
 
 product_bp = Blueprint('products', __name__)
 
-@product_bp.route('/', methods=['GET'])
+@product_bp.route('', methods=['GET'])
 def get_products():
     products = Product.query.filter_by(deleted_at=None).all()
     if not products:
         return jsonify({'error': 'No available product'}), 404
     return jsonify([product.to_dict() for product in products]), 200
 
-@product_bp.route('/', methods=['POST'])
+@product_bp.route('', methods=['POST'])
 def create_product():
     data = request.get_json()
     if not data:
@@ -81,6 +81,10 @@ def delete_product(product_id):
     product = Product.query.get(product_id)
     if product is None:
         return jsonify({'error': f'Product {product_id} not found'}), 404
+    
+    active_orders = [o for o in product.orders if o.deleted_at is None]
+    if active_orders:
+        return jsonify({'error': 'Product cannot be deleted because it is still used in one or more orders'}), 409
     product.deleted_at=datetime.now()
     db.session.commit()
     return jsonify({'message': 'Product deleted successfully'}), 200

@@ -1,6 +1,6 @@
 # coding: utf-8
 from datetime import datetime
-from extensions import db
+from configuration.extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class Category(db.Model):
@@ -9,8 +9,8 @@ class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True, server_default=db.FetchedValue())
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
-    is_active = db.Column(db.Boolean, nullable=False, server_default=db.FetchedValue())
-    created_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
+    is_active = db.Column(db.Boolean, nullable=False, default=True, server_default=db.FetchedValue())
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now, server_default=db.FetchedValue())
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
@@ -50,14 +50,15 @@ order_items = db.Table('order_items',
 class Order(db.Model):
     __tablename__ = 'orders'
     __table_args__ = (
-        db.CheckConstraint('total_price >= 0::numeric'),
+        db.CheckConstraint('total_price >= 0'),
     )
 
     id = db.Column(db.Integer, primary_key=True, server_default=db.FetchedValue())
     user_id = db.Column(db.ForeignKey('users.id'), nullable=False)
     total_price = db.Column(db.Numeric(10, 2), nullable=False)
-    status = db.Column(db.String(50), nullable=False, server_default=db.FetchedValue())
-    ordered_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
+    status = db.Column(db.String(50), nullable=False, default='pending', server_default=db.FetchedValue())
+    ordered_at = db.Column(db.DateTime, nullable=False, default=datetime.now, server_default=db.FetchedValue())
+    deleted_at = db.Column(db.DateTime, nullable=True)
 
     user = db.relationship('User', primaryjoin='Order.user_id == User.id', backref='orders')
     products = db.relationship('Product', secondary=order_items, backref='orders')
@@ -68,7 +69,8 @@ class Order(db.Model):
             'user_id' : self.user_id,
             'total_price' : self.total_price,
             'status' : self.status,
-            'ordered_at' : self.ordered_at
+            'ordered_at' : self.ordered_at,
+            'products' : [p.id for p in self.products]
         }
 
 class Product(db.Model):
@@ -80,7 +82,7 @@ class Product(db.Model):
     description = db.Column(db.Text)
     price = db.Column(db.Numeric(10, 2), nullable=False)
     stock_quantity = db.Column(db.Integer, nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now, server_default=db.FetchedValue())
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     category = db.relationship('Category', primaryjoin='Product.category_id == Category.id', backref='products')
@@ -103,9 +105,9 @@ class User(db.Model):
     username = db.Column(db.String(50), nullable=False, unique=True)
     email = db.Column(db.String(255), nullable=False, unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(50), nullable=False, server_default="user")
-    is_active = db.Column(db.Boolean, nullable=False, server_default=db.FetchedValue())
-    created_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
+    role = db.Column(db.String(50), nullable=False, default="user", server_default="user")
+    is_active = db.Column(db.Boolean, nullable=False, default=True, server_default=db.FetchedValue())
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now, server_default=db.FetchedValue())
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
