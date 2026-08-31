@@ -8,6 +8,7 @@ from routes.auth_route import auth_bp
 from flask_migrate import Migrate
 import os
 from dotenv import load_dotenv
+from flask_jwt_extended import JWTManager
 
 load_dotenv()
 
@@ -19,10 +20,12 @@ def create_app(test_config=None):
     else:
         app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
     db.init_app(app)
     Migrate(app, db)
+    jwt = JWTManager(app)
     app.register_blueprint(product_bp, url_prefix='/products')
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(user_bp, url_prefix='/users')
     app.register_blueprint(order_bp, url_prefix='/orders')
     app.register_blueprint(category_bp, url_prefix='/categories')

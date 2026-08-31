@@ -13,14 +13,17 @@ class Category(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now, server_default=db.FetchedValue())
     deleted_at = db.Column(db.DateTime, nullable=True)
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_products=False):
+        data = {
             'id' : self.id,
             'name' : self.name,
             'description' : self.description,
             'is_active' : self.is_active,
             'created_at' : self.created_at
         }
+        if include_products:
+            data['products'] = [p.to_dict() for p in self.products if p.deleted_at is None]
+        return data
 
 # class OrderItem(db.Model):
 #     __tablename__ = 'order_items'

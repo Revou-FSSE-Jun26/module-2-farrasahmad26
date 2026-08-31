@@ -4,10 +4,12 @@ from model.models import Product
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from validation.products_validation import validate_product_data
+from flask_jwt_extended import jwt_required
 
 product_bp = Blueprint('products', __name__)
 
 @product_bp.route('', methods=['GET'])
+@jwt_required()
 def get_products():
     products = Product.query.filter_by(deleted_at=None).all()
     if not products:

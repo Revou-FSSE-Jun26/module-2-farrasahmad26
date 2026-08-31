@@ -4,10 +4,14 @@ from model.models import User
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from validation.users_validation import validate_user_data
+from flask_jwt_extended import jwt_required
+from validation.validate import owner_required, admin_required
 
 user_bp = Blueprint('users', __name__)
 
 @user_bp.route('', methods=['GET'])
+@jwt_required()
+@admin_required
 def get_users():
     users = User.query.filter_by(deleted_at=None).all()
     if not users:
@@ -15,6 +19,8 @@ def get_users():
     return jsonify([user.to_dict() for user in users]), 200
 
 @user_bp.route('/<int:user_id>', methods=['GET'])
+@jwt_required()
+@owner_required
 def get_user(user_id):
     user = User.query.filter_by(id=user_id, deleted_at=None).first()
     if user is None:

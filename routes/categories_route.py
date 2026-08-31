@@ -19,7 +19,7 @@ def get_category(category_id):
     category = Category.query.get(category_id)
     if category is None:
         return jsonify({'error': f'Category {category_id} not found'}), 404
-    return jsonify(category.to_dict()), 200
+    return jsonify(category.to_dict(include_products=True)), 200
 
 @category_bp.route('', methods=['POST'])
 def create_category():
