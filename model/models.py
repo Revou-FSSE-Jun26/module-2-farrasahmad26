@@ -6,11 +6,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 class Category(db.Model):
     __tablename__ = 'categories'
 
-    id = db.Column(db.Integer, primary_key=True, server_default=db.FetchedValue())
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
-    is_active = db.Column(db.Boolean, nullable=False, default=True, server_default=db.FetchedValue())
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now, server_default=db.FetchedValue())
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self, include_products=False):
@@ -56,11 +56,11 @@ class Order(db.Model):
         db.CheckConstraint('total_price >= 0'),
     )
 
-    id = db.Column(db.Integer, primary_key=True, server_default=db.FetchedValue())
+    id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.ForeignKey('users.id'), nullable=False)
     total_price = db.Column(db.Numeric(10, 2), nullable=False)
-    status = db.Column(db.String(50), nullable=False, default='pending', server_default=db.FetchedValue())
-    ordered_at = db.Column(db.DateTime, nullable=False, default=datetime.now, server_default=db.FetchedValue())
+    status = db.Column(db.String(50), nullable=False, default='pending')
+    ordered_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     user = db.relationship('User', primaryjoin='Order.user_id == User.id', backref='orders')
@@ -79,13 +79,13 @@ class Order(db.Model):
 class Product(db.Model):
     __tablename__ = 'products'
 
-    id = db.Column(db.Integer, primary_key=True, server_default=db.FetchedValue())
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     category_id = db.Column(db.ForeignKey('categories.id'), nullable=False)
     description = db.Column(db.Text)
     price = db.Column(db.Numeric(10, 2), nullable=False)
     stock_quantity = db.Column(db.Integer, nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now, server_default=db.FetchedValue())
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     category = db.relationship('Category', primaryjoin='Product.category_id == Category.id', backref='products')
@@ -104,13 +104,13 @@ class Product(db.Model):
 class User(db.Model):
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True, server_default=db.FetchedValue())
+    id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), nullable=False, unique=True)
     email = db.Column(db.String(255), nullable=False, unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(50), nullable=False, default="user", server_default="user")
-    is_active = db.Column(db.Boolean, nullable=False, default=True, server_default=db.FetchedValue())
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now, server_default=db.FetchedValue())
+    role = db.Column(db.String(50), nullable=False, default="user")
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
