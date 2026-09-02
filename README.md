@@ -137,6 +137,14 @@ RevoShop uses a PostgreSQL database (`revoshop_db`) with the following tables:
 
    The server will start at `http://localhost:5000`.
 
+## Deployment
+
+The API is deployed on Render and available at:
+
+**[https://module-2-farrasahmad26.onrender.com](https://module-2-farrasahmad26.onrender.com)**
+
+> Note: On Render's free tier the service may take a few seconds to spin up on the first request after being idle.
+
 ## API Endpoints
 
 Postman documentation URL:
