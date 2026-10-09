@@ -4,6 +4,8 @@ from model.models import Category
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from validation.categories_validation import validate_category_data
+from flask_jwt_extended import jwt_required
+from validation.validate import owner_required, admin_required
 
 category_bp = Blueprint('categories', __name__)
 
@@ -22,6 +24,8 @@ def get_category(category_id):
     return jsonify(category.to_dict(include_products=True)), 200
 
 @category_bp.route('', methods=['POST'])
+# @jwt_required()
+# @admin_requried
 def create_category():
     data = request.get_json()
     if not data:
@@ -43,6 +47,8 @@ def create_category():
         return jsonify({'error': 'Data violates database constraints'}), 409
     
 @category_bp.route('/<int:category_id>', methods=['PUT'])
+# @jwt_required()
+# @admin_requried
 def update_category(category_id):
     category = Category.query.get(category_id)
     if category is None:
@@ -68,6 +74,8 @@ def update_category(category_id):
         return jsonify({'error': 'Database error', 'detail': str(e)}), 500
     
 @category_bp.route('/<int:category_id>', methods=['DELETE'])
+# @jwt_required()
+# @admin_requried
 def delete_category(category_id):
     category = Category.query.get(category_id)
     if category is None:

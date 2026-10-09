@@ -10,8 +10,8 @@ from validation.validate import owner_required, admin_required
 user_bp = Blueprint('users', __name__)
 
 @user_bp.route('', methods=['GET'])
-@jwt_required()
-@admin_required
+# @jwt_required()
+# @admin_required
 def get_users():
     users = User.query.filter_by(deleted_at=None).all()
     if not users:
@@ -19,8 +19,9 @@ def get_users():
     return jsonify([user.to_dict() for user in users]), 200
 
 @user_bp.route('/<int:user_id>', methods=['GET'])
-@jwt_required()
-@owner_required
+# @jwt_required()
+# @admin_required
+# @owner_required
 def get_user(user_id):
     user = User.query.filter_by(id=user_id, deleted_at=None).first()
     if user is None:
@@ -36,7 +37,22 @@ def create_user():
     error, code = validate_user_data(data, require_all=True)
     if error:
         return jsonify({'error': error}), code
-        
+    
+    is_user = User.query.filter_by(email=data['email']).first()
+    if is_user and is_user.deleted_at:
+        # restore yang mana??
+        try:
+            is_user.deleted_at=None
+            db.session.commit()
+            return jsonify({'message': 'User restored successfully'}), 200
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({'error': 'Failed to restore user'}), 409
+    
+    is_username = User.query.filter_by(username=data['username']).first()
+    if is_username:
+        return jsonify({'error': 'Email or username already exists'}), 409
+
     user = User(
         username=data.get('username').strip(),
         email=data.get('email').strip(),
@@ -51,7 +67,7 @@ def create_user():
         return jsonify(user.to_dict()), 201
     except IntegrityError:
         db.session.rollback()
-        return jsonify({'error': 'username or email already registered'}), 409
+        return jsonify({'error': 'Something went wrong'}), 409
 
 @user_bp.route('/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
@@ -87,6 +103,9 @@ def update_user(user_id):
         return jsonify({'error': 'username or email already registered'}), 409
 
 @user_bp.route('/<int:user_id>', methods=['DELETE'])
+# @jwt_required()
+# @admin_required
+# @owner_required
 def delete_user(user_id):
     user = User.query.filter_by(id=user_id, deleted_at=None).first()
     if user is None:

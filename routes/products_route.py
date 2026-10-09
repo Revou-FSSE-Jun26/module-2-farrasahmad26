@@ -5,11 +5,11 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from validation.products_validation import validate_product_data
 from flask_jwt_extended import jwt_required
+from validation.validate import owner_required, admin_required
 
 product_bp = Blueprint('products', __name__)
 
 @product_bp.route('', methods=['GET'])
-@jwt_required()
 def get_products():
     products = Product.query.filter_by(deleted_at=None).all()
     if not products:
@@ -17,6 +17,8 @@ def get_products():
     return jsonify([product.to_dict() for product in products]), 200
 
 @product_bp.route('', methods=['POST'])
+# @jwt_required()
+# @admin_requried
 def create_product():
     data = request.get_json()
     if not data:
@@ -48,6 +50,8 @@ def get_product(product_id):
     return jsonify(product.to_dict()), 200
 
 @product_bp.route('/<int:product_id>', methods=['PUT'])
+# @jwt_required()
+# @admin_requried
 def update_product(product_id):
     product = Product.query.get(product_id)
     if product is None:
@@ -79,6 +83,8 @@ def update_product(product_id):
         return jsonify({'error': 'Database error', 'detail': str(e)}), 500
 
 @product_bp.route('/<int:product_id>', methods=['DELETE'])
+# @jwt_required()
+# @admin_requried
 def delete_product(product_id):
     product = Product.query.get(product_id)
     if product is None:
