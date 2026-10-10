@@ -11,7 +11,11 @@ product_bp = Blueprint('products', __name__)
 
 @product_bp.route('', methods=['GET'])
 def get_products():
-    products = Product.query.filter_by(deleted_at=None).all()
+    query = Product.query.filter_by(deleted_at=None)
+    category_id = request.args.get('category_id', type=int)
+    if category_id is not None:
+        query = query.filter_by(category_id=category_id)
+    products = query.all()
     if not products:
         return jsonify({'error': 'No available product'}), 404
     return jsonify([product.to_dict() for product in products]), 200

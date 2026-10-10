@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from configuration.extensions import db
 from routes.categories_route import category_bp
 from routes.orders_route import order_bp
@@ -14,6 +15,7 @@ load_dotenv()
 
 def create_app(test_config=None):
     app = Flask(__name__)
+    CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}})
 
     if test_config:
         app.config.update(test_config)
