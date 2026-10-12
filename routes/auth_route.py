@@ -31,5 +31,6 @@ def login():
     return jsonify({
         'success': True,
         'message' : 'real user',
-        'access_token': access_token
+        'access_token': access_token,
+        'user': is_user.to_dict()
     }), 200
