@@ -1,6 +1,6 @@
 from flask import jsonify, request, Blueprint
 from configuration.extensions import db
-from model.models import User, Order, Product
+from model.models import User, Order, Product, OrderItem
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from validation.orders_validation import validate_order_data
@@ -38,16 +38,29 @@ def create_order():
     if user is None:
         return jsonify({'error': f'User {data["user_id"]} not found'}), 404
     
-    products = Product.query.filter(Product.id.in_(data['product_ids'])).all()
-    if len(products) != len(data['product_ids']):
-        return jsonify({'error': 'One or more product id(s) not found'}), 404
+    products_ids = [item['product_id'] for item in data['items']]
+    products = {p.id: p for p in Product.query.filter(Product.id.in_(products_ids)).all()}
+    if len(products) != len(set(products_ids)):
+        return jsonify({'error': 'One or more product_id(s) not found'}), 404
+
+    total_price = 0
+    order_items_list = []
+    for item in data['items']:
+        product = products[item['product_id']]
+        qty = item['quantity']
+        total_price += product.price * qty
+        order_items_list.append(OrderItem(
+            product_id=product.id,
+            quantity=qty,
+            price_at_order=product.price
+        ))
     
     order = Order(
-        user_id=data.get('user_id'),
-        total_price=data.get('total_price'),
-        status=data.get('status')
+        user_id=data['user_id'],
+        total_price=total_price,
+        status=data.get('status', 'pending')
     )
-    order.products = products
+    order.order_items = order_items_list
 
     try:
         db.session.add(order)
