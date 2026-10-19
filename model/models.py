@@ -25,31 +25,6 @@ class Category(db.Model):
             data['products'] = [p.to_dict() for p in self.products if p.deleted_at is None]
         return data
 
-# class OrderItem(db.Model):
-#     __tablename__ = 'order_items'
-#     __table_args__ = (
-#         db.CheckConstraint('quantity > 0'),
-#     )
-
-#     order_id = db.Column(db.ForeignKey('orders.id', ondelete='CASCADE'), primary_key=True, nullable=False)
-#     product_id = db.Column(db.ForeignKey('products.id'), primary_key=True, nullable=False)
-#     quantity = db.Column(db.Integer, nullable=False, server_default=db.FetchedValue())
-
-#     order = db.relationship('Order', primaryjoin='OrderItem.order_id == Order.id', backref='order_items')
-#     product = db.relationship('Product', primaryjoin='OrderItem.product_id == Product.id', backref='order_items')
-
-#     def to_dict(self):
-#         return {
-#             'order_id' : self.order_id,
-#             'product_id' : self.product_id,
-#             'quantity' : self.quantity
-#         }
-
-order_items = db.Table('order_items',
-    db.Column('order_id', db.Integer, db.ForeignKey('orders.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('product_id', db.Integer, db.ForeignKey('products.id'), primary_key=True)
-)
-
 class Order(db.Model):
     __tablename__ = 'orders'
     __table_args__ = (
@@ -64,16 +39,15 @@ class Order(db.Model):
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     user = db.relationship('User', primaryjoin='Order.user_id == User.id', backref='orders')
-    products = db.relationship('Product', secondary=order_items, backref='orders')
 
     def to_dict(self):
         return {
             'id' : self.id,
             'user_id' : self.user_id,
-            'total_price' : self.total_price,
+            'total_price' : float(self.total_price),
             'status' : self.status,
             'ordered_at' : self.ordered_at,
-            'products' : [p.id for p in self.products]
+            'items': [item.to_dict() for item in self.order_items]
         }
 
 class Product(db.Model):
@@ -99,6 +73,27 @@ class Product(db.Model):
             'price' : self.price,
             'stock_quantity' : self.stock_quantity,
             'created_at' : self.created_at
+        }
+
+class OrderItem(db.Model):
+    __tablename__ = 'order_items'
+    __table_args__ = (
+        db.CheckConstraint('quantity > 0'),
+    )
+
+    order_id = db.Column(db.ForeignKey('orders.id', ondelete='CASCADE'), primary_key=True, nullable=False)
+    product_id = db.Column(db.ForeignKey('products.id'), primary_key=True, nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    price_at_order = db.Column(db.Numeric(10, 2), nullable=False)
+
+    order = db.relationship('Order', backref='order_items')
+    product = db.relationship('Product')
+
+    def to_dict(self):
+        return {
+            'product_id': self.product_id,
+            'quantity': self.quantity,
+            'price_at_order': float(self.price_at_order)
         }
 
 class User(db.Model):
