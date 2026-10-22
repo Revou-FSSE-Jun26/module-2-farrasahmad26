@@ -49,7 +49,8 @@ def create_product():
 @product_bp.route('/<int:product_id>', methods=['GET'])
 def get_product(product_id):
     product = Product.query.get(product_id)
-    if product is None:
+    # Produk yang sudah di-soft-delete dianggap tidak ada, konsisten dengan list.
+    if product is None or product.deleted_at is not None:
         return jsonify({'error': f'Product {product_id} not found'}), 404
     return jsonify(product.to_dict()), 200
 
