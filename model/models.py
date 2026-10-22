@@ -87,7 +87,7 @@ class OrderItem(db.Model):
     price_at_order = db.Column(db.Numeric(10, 2), nullable=False)
 
     order = db.relationship('Order', backref='order_items')
-    product = db.relationship('Product')
+    product = db.relationship('Product', backref='order_items')
 
     def to_dict(self):
         return {
