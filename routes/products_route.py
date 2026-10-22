@@ -49,7 +49,6 @@ def create_product():
 @product_bp.route('/<int:product_id>', methods=['GET'])
 def get_product(product_id):
     product = Product.query.get(product_id)
-    # Produk yang sudah di-soft-delete dianggap tidak ada, konsisten dengan list.
     if product is None or product.deleted_at is not None:
         return jsonify({'error': f'Product {product_id} not found'}), 404
     return jsonify(product.to_dict()), 200
@@ -95,8 +94,6 @@ def delete_product(product_id):
     if product is None:
         return jsonify({'error': f'Product {product_id} not found'}), 404
     
-    # Produk terhubung ke order melalui order_items. Cek apakah masih ada
-    # order aktif (belum di-soft-delete) yang memakai produk ini.
     active_orders = [
         oi for oi in product.order_items
         if oi.order is not None and oi.order.deleted_at is None
