@@ -36,7 +36,8 @@ def create_category():
         return jsonify({'error': error}), code
     category = Category(
         name=data.get('name').strip(),
-        description=data.get('description')
+        description=data.get('description'),
+        image=(data.get('image') or '').strip() or None
     )
     try:
         db.session.add(category)
@@ -65,6 +66,9 @@ def update_category(category_id):
         category.name=data['name'].strip()
     if data.get('description') is not None:
         category.description=data['description']
+    if data.get('image') is not None:
+        # An empty string clears the image.
+        category.image=data['image'].strip() or None
 
     try:
         db.session.commit()
