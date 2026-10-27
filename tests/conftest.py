@@ -20,8 +20,8 @@ def app():
         _db.session.add(category)
         _db.session.flush()
 
-        product1 = Product(name='Laptop Gaming', price=2999.99, stock_quantity=1, category_id=category.id, created_at=datetime.now())
-        product2 = Product(name='Webcam', price=99.99, stock_quantity=2, category_id=category.id, created_at=datetime.now())
+        product1 = Product(name='Laptop Gaming', slug='laptop-gaming', price=2999.99, stock_quantity=1, category_id=category.id, created_at=datetime.now())
+        product2 = Product(name='Webcam', slug='webcam', price=99.99, stock_quantity=2, category_id=category.id, created_at=datetime.now())
         _db.session.add_all([product1, product2])
         
         user = User(username='John', email='johntest123@email.com', role='user', is_active=True, created_at=datetime.now())
