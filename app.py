@@ -13,9 +13,15 @@ from flask_jwt_extended import JWTManager
 
 load_dotenv()
 
+def get_cors_origins():
+    # Comma-separated list, e.g. "http://localhost:3000,https://revocoffee.vercel.app".
+    # Trailing slashes are stripped because the browser's Origin header never has one.
+    raw = os.getenv('CORS_ORIGINS', 'http://localhost:3000')
+    return [origin.strip().rstrip('/') for origin in raw.split(',') if origin.strip()]
+
 def create_app(test_config=None):
     app = Flask(__name__)
-    CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}})
+    CORS(app, resources={r"/*": {"origins": get_cors_origins()}})
 
     if test_config:
         app.config.update(test_config)

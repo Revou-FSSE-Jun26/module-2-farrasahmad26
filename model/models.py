@@ -61,6 +61,8 @@ class Product(db.Model):
     stock_quantity = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     deleted_at = db.Column(db.DateTime, nullable=True)
+    image = db.Column(db.Text)
+    slug = db.Column(db.String(100), nullable=False, unique=True)
 
     category = db.relationship('Category', primaryjoin='Product.category_id == Category.id', backref='products')
 
@@ -69,10 +71,13 @@ class Product(db.Model):
             'id' : self.id,
             'name' : self.name,
             'category_id' : self.category_id,
+            'category' : self.category.name if self.category else None,
             'description' : self.description,
             'price' : self.price,
             'stock_quantity' : self.stock_quantity,
-            'created_at' : self.created_at
+            'created_at' : self.created_at,
+            'image' : self.image,
+            'slug' : self.slug,
         }
 
 class OrderItem(db.Model):

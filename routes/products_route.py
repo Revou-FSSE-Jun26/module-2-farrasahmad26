@@ -1,3 +1,4 @@
+import re
 from flask import jsonify, request, Blueprint
 from configuration.extensions import db
 from model.models import Product
@@ -8,6 +9,18 @@ from flask_jwt_extended import jwt_required
 from validation.validate import owner_required, admin_required
 
 product_bp = Blueprint('products', __name__)
+
+def slugify(text):
+    slug = re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')[:90] or 'product'
+    # A purely numeric slug would be captured by the <int:product_id> route.
+    return f'product-{slug}' if slug.isdigit() else slug
+
+def unique_slug(text):
+    base = slugify(text)
+    slug, n = base, 2
+    while Product.query.filter_by(slug=slug).first():
+        slug, n = f'{base}-{n}', n + 1
+    return slug
 
 @product_bp.route('', methods=['GET'])
 def get_products():
@@ -31,12 +44,17 @@ def create_product():
     error, code = validate_product_data(data, require_all=True)
     if error:
         return jsonify({'error': error}), code
+    # Use the client-provided slug if it's a non-empty string, otherwise derive it from the name.
+    raw_slug = data.get('slug')
+    slug_source = raw_slug if isinstance(raw_slug, str) and raw_slug.strip() else data['name']
     product = Product(
         name=data.get('name').strip(),
+        slug=unique_slug(slug_source),
         category_id=data.get('category_id'),
         description=data.get('description'),
         price=data.get('price'),
-        stock_quantity=data.get('stock_quantity')
+        stock_quantity=data.get('stock_quantity'),
+        image=data.get('image')
     )
     try:
         db.session.add(product)
@@ -51,6 +69,13 @@ def get_product(product_id):
     product = Product.query.get(product_id)
     if product is None or product.deleted_at is not None:
         return jsonify({'error': f'Product {product_id} not found'}), 404
+    return jsonify(product.to_dict()), 200
+
+@product_bp.route('/<string:slug>', methods=['GET'])
+def get_product_by_slug(slug):
+    product = Product.query.filter_by(slug=slug, deleted_at=None).first()
+    if product is None:
+        return jsonify({'error': f'Product {slug} not found'}), 404
     return jsonify(product.to_dict()), 200
 
 @product_bp.route('/<int:product_id>', methods=['PUT'])
@@ -78,6 +103,8 @@ def update_product(product_id):
         product.stock_quantity=data['stock_quantity']
     if data.get('description') is not None:
         product.description=data['description']
+    if data.get('image') is not None:
+        product.image=data['image']
 
     try:
         db.session.commit()
