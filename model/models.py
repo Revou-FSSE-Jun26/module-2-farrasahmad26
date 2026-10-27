@@ -12,6 +12,7 @@ class Category(db.Model):
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     deleted_at = db.Column(db.DateTime, nullable=True)
+    image = db.Column(db.Text)
 
     def to_dict(self, include_products=False):
         data = {
@@ -19,7 +20,8 @@ class Category(db.Model):
             'name' : self.name,
             'description' : self.description,
             'is_active' : self.is_active,
-            'created_at' : self.created_at
+            'created_at' : self.created_at,
+            'image' : self.image,
         }
         if include_products:
             data['products'] = [p.to_dict() for p in self.products if p.deleted_at is None]
@@ -28,7 +30,8 @@ class Category(db.Model):
 class Order(db.Model):
     __tablename__ = 'orders'
     __table_args__ = (
-        db.CheckConstraint('total_price >= 0'),
+        # Named to match the existing DB constraint so Alembic autogenerate stops trying to drop it.
+        db.CheckConstraint('total_price >= 0', name='orders_total_price_check'),
     )
 
     id = db.Column(db.Integer, primary_key=True)
