@@ -8,6 +8,7 @@ from routes.users_route import user_bp
 from routes.auth_route import auth_bp
 from flask_migrate import Migrate
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
 
@@ -23,6 +24,8 @@ def create_app(test_config=None):
     app = Flask(__name__)
     CORS(app, resources={r"/*": {"origins": get_cors_origins()}})
 
+    # Default is 15 minutes, which logs shoppers out mid-session.
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=1)
     if test_config:
         app.config.update(test_config)
     else:

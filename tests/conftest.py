@@ -10,6 +10,7 @@ def app():
         'TESTING': True,
         'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:',
         'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+        'JWT_SECRET_KEY': 'test-secret-key-that-is-long-enough-for-hs256',
     }
     flask_app = create_app(test_config)
 
