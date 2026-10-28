@@ -41,15 +41,47 @@ class Order(db.Model):
     ordered_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     deleted_at = db.Column(db.DateTime, nullable=True)
 
+    # Checkout details. All nullable so orders created before checkout existed stay valid.
+    # Card numbers / CVC / GoPay numbers are intentionally never stored.
+    first_name = db.Column(db.String(100))
+    last_name = db.Column(db.String(100))
+    phone = db.Column(db.String(20))
+    company = db.Column(db.String(150))
+    address = db.Column(db.String(255))
+    apartment = db.Column(db.String(255))
+    city = db.Column(db.String(100))
+    province = db.Column(db.String(100))
+    postal_code = db.Column(db.String(10))
+    country = db.Column(db.String(100))
+    shipping_method = db.Column(db.String(20))
+    shipping_cost = db.Column(db.Numeric(10, 2), nullable=False, default=0, server_default='0')
+    payment_method = db.Column(db.String(20))
+    note = db.Column(db.Text)
+
     user = db.relationship('User', primaryjoin='Order.user_id == User.id', backref='orders')
 
     def to_dict(self):
         return {
             'id' : self.id,
             'user_id' : self.user_id,
+            'email' : self.user.email if self.user else None,
             'total_price' : float(self.total_price),
+            'shipping_cost' : float(self.shipping_cost or 0),
             'status' : self.status,
             'ordered_at' : self.ordered_at,
+            'first_name' : self.first_name,
+            'last_name' : self.last_name,
+            'phone' : self.phone,
+            'company' : self.company,
+            'address' : self.address,
+            'apartment' : self.apartment,
+            'city' : self.city,
+            'province' : self.province,
+            'postal_code' : self.postal_code,
+            'country' : self.country,
+            'shipping_method' : self.shipping_method,
+            'payment_method' : self.payment_method,
+            'note' : self.note,
             'items': [item.to_dict() for item in self.order_items]
         }
 
@@ -98,10 +130,16 @@ class OrderItem(db.Model):
     product = db.relationship('Product', backref='order_items')
 
     def to_dict(self):
+        # Product info is included so the order pages don't need a second request.
+        product = self.product
         return {
             'product_id': self.product_id,
             'quantity': self.quantity,
-            'price_at_order': float(self.price_at_order)
+            'price_at_order': float(self.price_at_order),
+            'name': product.name if product else None,
+            'slug': product.slug if product else None,
+            'image': product.image if product else None,
+            'category': product.category.name if product and product.category else None,
         }
 
 class User(db.Model):
