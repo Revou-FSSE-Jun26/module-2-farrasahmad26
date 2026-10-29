@@ -35,6 +35,14 @@ def create_app(test_config=None):
     db.init_app(app)
     Migrate(app, db)
     jwt = JWTManager(app)
+
+    # Tokens live for a day, so re-check the user on every request: a deactivated user,
+    # or one whose role changed since login, gets 401 and must log in again.
+    @jwt.token_in_blocklist_loader
+    def token_is_stale(jwt_header, jwt_payload):
+        from model.models import User
+        user = db.session.get(User, int(jwt_payload['sub']))
+        return user is None or not user.can_login or user.role != jwt_payload.get('role')
     app.register_blueprint(product_bp, url_prefix='/products')
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(user_bp, url_prefix='/users')

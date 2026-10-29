@@ -19,6 +19,9 @@ def login():
     is_user = User.query.filter_by(email=email).first()
     if is_user is None or not is_user.check_password(password):
         return jsonify({'success': False, 'message': 'wrong email or password'}), 401
+    # Checked after the password so the account status isn't revealed to strangers.
+    if not is_user.can_login:
+        return jsonify({'success': False, 'message': 'This account has been deactivated'}), 403
     
     access_token = create_access_token(
         identity=str(is_user.id),
