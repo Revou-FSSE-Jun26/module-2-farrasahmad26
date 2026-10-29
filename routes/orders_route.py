@@ -108,7 +108,7 @@ def create_order():
         # New orders always start as pending; clients can't create completed orders.
         status='pending',
         **{field: (data[field].strip() or None) if isinstance(data.get(field), str) else None
-           for field in CHECKOUT_FIELDS},
+            for field in CHECKOUT_FIELDS},
     )
     order.order_items = order_items_list
 

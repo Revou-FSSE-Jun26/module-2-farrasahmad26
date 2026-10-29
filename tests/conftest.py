@@ -43,3 +43,27 @@ def app():
 @pytest.fixture(scope='module')
 def client(app):
     return app.test_client()
+
+
+def _auth_headers(app, email, role):
+    """Creates (or reuses) a user with the given role and returns Bearer headers for it."""
+    from flask_jwt_extended import create_access_token
+    with app.app_context():
+        user = User.query.filter_by(email=email).first()
+        if user is None:
+            user = User(username=email.split('@')[0], email=email, role=role, is_active=True, created_at=datetime.now())
+            user.hashing_password('password123')
+            _db.session.add(user)
+            _db.session.commit()
+        token = create_access_token(identity=str(user.id), additional_claims={'email': user.email, 'role': user.role})
+        return {'Authorization': f'Bearer {token}'}
+
+
+@pytest.fixture(scope='module')
+def admin_headers(app):
+    return _auth_headers(app, 'fixture-admin@email.com', 'admin')
+
+
+@pytest.fixture(scope='module')
+def user_headers(app):
+    return _auth_headers(app, 'fixture-user@email.com', 'user')
