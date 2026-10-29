@@ -72,6 +72,7 @@ class Order(db.Model):
             'id' : self.id,
             'user_id' : self.user_id,
             'email' : self.user.email if self.user else None,
+            'username' : self.user.username if self.user else None,
             'total_price' : float(self.total_price),
             'shipping_cost' : float(self.shipping_cost or 0),
             'status' : self.status,
@@ -170,9 +171,15 @@ class User(db.Model):
             'username' : self.username,
             'email' : self.email,
             'role' : self.role,
-            'is_active' : self.is_active,
-            'created_at' : self.created_at
+            # Soft-deleted users are "inactive" (same rule as products/categories).
+            'is_active' : bool(self.is_active) and self.deleted_at is None,
+            'created_at' : self.created_at,
+            'deleted_at' : self.deleted_at,
         }
+
+    @property
+    def can_login(self):
+        return bool(self.is_active) and self.deleted_at is None
     
     def hashing_password(self, raw_pass):
         self.password_hash = generate_password_hash(raw_pass)
