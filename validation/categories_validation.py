@@ -11,6 +11,13 @@ def validate_category_data(data, require_all=True):
         if len(name.strip()) > 100:
             return 'name cannot exceed 100 characters', 422
 
+    description = data.get('description')
+    if description is not None:
+        if not isinstance(description, str):
+            return 'description must be a string', 400
+        if len(description.strip()) > 500:
+            return 'description cannot exceed 500 characters', 422
+
     image = data.get('image')
     if image is not None:
         if not isinstance(image, str):

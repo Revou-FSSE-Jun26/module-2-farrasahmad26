@@ -5,8 +5,8 @@ from model.models import Product
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from validation.products_validation import validate_product_data
-from flask_jwt_extended import jwt_required
-from validation.validate import owner_required, admin_required
+from flask_jwt_extended import jwt_required, verify_jwt_in_request, get_jwt
+from validation.validate import admin_required
 
 product_bp = Blueprint('products', __name__)
 
@@ -24,18 +24,26 @@ def unique_slug(text):
 
 @product_bp.route('', methods=['GET'])
 def get_products():
-    query = Product.query.filter_by(deleted_at=None)
+    # Public list = active products only. Admins can pass ?include_inactive=true
+    # to also get soft-deleted products (dashboard), so they can be reactivated.
+    if request.args.get('include_inactive', '').lower() == 'true':
+        verify_jwt_in_request()
+        if get_jwt().get('role') != 'admin':
+            return jsonify({'error': 'Only admin can list inactive products'}), 403
+        query = Product.query
+    else:
+        query = Product.query.filter_by(deleted_at=None)
     category_id = request.args.get('category_id', type=int)
     if category_id is not None:
         query = query.filter_by(category_id=category_id)
-    products = query.all()
+    products = query.order_by(Product.id).all()
     if not products:
         return jsonify({'error': 'No available product'}), 404
     return jsonify([product.to_dict() for product in products]), 200
 
 @product_bp.route('', methods=['POST'])
-# @jwt_required()
-# @admin_requried
+@jwt_required()
+@admin_required
 def create_product():
     data = request.get_json()
     if not data:
@@ -67,6 +75,14 @@ def create_product():
 @product_bp.route('/<int:product_id>', methods=['GET'])
 def get_product(product_id):
     product = Product.query.get(product_id)
+    # Admins editing a deactivated product need to load it too.
+    if request.args.get('include_inactive', '').lower() == 'true':
+        verify_jwt_in_request()
+        if get_jwt().get('role') != 'admin':
+            return jsonify({'error': 'Only admin can view inactive products'}), 403
+        if product is None:
+            return jsonify({'error': f'Product {product_id} not found'}), 404
+        return jsonify(product.to_dict()), 200
     if product is None or product.deleted_at is not None:
         return jsonify({'error': f'Product {product_id} not found'}), 404
     return jsonify(product.to_dict()), 200
@@ -79,8 +95,8 @@ def get_product_by_slug(slug):
     return jsonify(product.to_dict()), 200
 
 @product_bp.route('/<int:product_id>', methods=['PUT'])
-# @jwt_required()
-# @admin_requried
+@jwt_required()
+@admin_required
 def update_product(product_id):
     product = Product.query.get(product_id)
     if product is None:
@@ -101,10 +117,11 @@ def update_product(product_id):
         product.category_id=data['category_id']
     if data.get('stock_quantity') is not None:
         product.stock_quantity=data['stock_quantity']
+    # An empty string clears description / image.
     if data.get('description') is not None:
-        product.description=data['description']
+        product.description=data['description'].strip() or None
     if data.get('image') is not None:
-        product.image=data['image']
+        product.image=data['image'].strip() or None
 
     try:
         db.session.commit()
@@ -114,8 +131,8 @@ def update_product(product_id):
         return jsonify({'error': 'Database error', 'detail': str(e)}), 500
 
 @product_bp.route('/<int:product_id>', methods=['DELETE'])
-# @jwt_required()
-# @admin_requried
+@jwt_required()
+@admin_required
 def delete_product(product_id):
     product = Product.query.get(product_id)
     if product is None:
@@ -132,6 +149,8 @@ def delete_product(product_id):
     return jsonify({'message': 'Product deleted successfully'}), 200
 
 @product_bp.route('/restore/<int:product_id>', methods=['PUT'])
+@jwt_required()
+@admin_required
 def restore_product(product_id):
     product = Product.query.get(product_id)
     if product is None:
@@ -140,4 +159,4 @@ def restore_product(product_id):
         return jsonify({'error': 'Product is not deleted'}), 400
     product.deleted_at=None
     db.session.commit()
-    return jsonify({'message': 'Product restored successfully'}), 200
+    return jsonify({'message': 'Product restored successfully', 'product': product.to_dict()}), 200

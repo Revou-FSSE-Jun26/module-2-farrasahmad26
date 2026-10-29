@@ -14,14 +14,21 @@ class Category(db.Model):
     deleted_at = db.Column(db.DateTime, nullable=True)
     image = db.Column(db.Text)
 
+    def active_product_count(self):
+        return sum(1 for p in self.products if p.deleted_at is None)
+
     def to_dict(self, include_products=False):
         data = {
             'id' : self.id,
             'name' : self.name,
             'description' : self.description,
-            'is_active' : self.is_active,
+            # Soft-deleted categories are "inactive" (same rule as products).
+            'is_active' : bool(self.is_active) and self.deleted_at is None,
             'created_at' : self.created_at,
+            'deleted_at' : self.deleted_at,
             'image' : self.image,
+            # Only active products count: that's what shoppers can see.
+            'product_count' : self.active_product_count(),
         }
         if include_products:
             data['products'] = [p.to_dict() for p in self.products if p.deleted_at is None]
@@ -113,6 +120,9 @@ class Product(db.Model):
             'created_at' : self.created_at,
             'image' : self.image,
             'slug' : self.slug,
+            # Soft-deleted products are "inactive" in the admin dashboard.
+            'is_active' : self.deleted_at is None,
+            'deleted_at' : self.deleted_at,
         }
 
 class OrderItem(db.Model):
